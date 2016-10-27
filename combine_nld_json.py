@@ -20,6 +20,8 @@ for file in files:
 			if str_entry.strip():
 				json_entry = json.loads(str_entry)
 				entries_map[json_entry['id']] = json_entry
+				
+		f.close()
 
 
 with open('data.json', 'w+') as f:
