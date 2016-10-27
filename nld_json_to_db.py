@@ -4,7 +4,7 @@ import json
 import sys
 from pymongo import MongoClient
 
-client = MongoClient('mongodb://data-helpers:data-helpers@localhost:<port>/data-helpers')
+client = MongoClient()
 collection = client['data-helpers']['entries']
 
 if len(sys.argv) < 2:
