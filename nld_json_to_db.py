@@ -45,6 +45,6 @@ suffix = [
 
 for num in suffix:
 	url = file_url + num
-	entries = [entry for entry in urllib2.urlopen(file_url).read().split("\n") if entry.strip() != '']
+	entries = [entry for entry in urllib2.urlopen(url).read().split("\n") if entry.strip() != '']
 	collection.insert(json.loads('[' + ','.join(entries) + ']'))
 	entries = None
