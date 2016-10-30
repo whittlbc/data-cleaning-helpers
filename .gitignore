@@ -1,4 +1,6 @@
 *.pyc
 .idea/
 tmp/
-test.csv
+*.csv
+*.gz
+csv
