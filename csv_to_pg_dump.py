@@ -3,6 +3,8 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import sys
 import pandas
 import os
+import code
+import numpy as np
 
 
 def get_db_connection(db):
@@ -47,7 +49,7 @@ def get_data_types(df, headers):
 	data_types = []
 	
 	for header in headers:
-		col_data = filter(lambda x: x != '', list(df.loc[:, header]))
+		col_data = filter(lambda x: x != '' and x != header, list(df.loc[:, header]))
 		
 		if not col_data:
 			error('Column "{}" is completely empty.'.format(header))
@@ -93,8 +95,11 @@ def read_csv(csv):
 def create_schema(csv):
 	print 'Reading csv...'
 	df = read_csv(csv)
-	data = df.values
 	headers = df.columns.values
+	header_array = np.array(headers)
+	
+	# Make sure we remove any duplicate header rows since this is probably a composed csv file.
+	data = np.array([x for x in df.values if not np.array_equal(x, header_array)])
 	
 	print 'Inferring datatypes...'
 	
@@ -181,23 +186,19 @@ def insert_table_data(cur, headers, rows):
 							
 	header_names = ', '.join(map(lambda x: x['header'], headers))
 	placeholders = ','.join(['%s'] * len(headers))
-	
 	values = ','.join(cur.mogrify('({})'.format(placeholders), r) for r in data)
+	
 	cur.execute('INSERT INTO resources ({}) VALUES {}'.format(header_names, values))
 
 
-def format_val(type, val):
+def format_val(dt, val):
 	# if no value, return the empty type you want
-	if not val:
-		if type == 'text':
-			return ''
-		else:
-			return None
+	if not val: return None
 	
-	if type == 'int':
+	if dt == 'int':
 		val = int(val)
-	elif type == 'boolean':
-		val = bool(val)
+	elif dt == 'boolean':
+		val = {'true': True, 'false': False}[val.lower()]
 	else:
 		val = val.encode('utf-8')
 	

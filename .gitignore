@@ -3,4 +3,5 @@
 tmp/
 *.csv
 *.gz
-csv
+hn_comments
+*.json
