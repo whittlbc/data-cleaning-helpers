@@ -18,13 +18,9 @@ from nltk.corpus import stopwords
 stemmer = SnowballStemmer('english')
 
 
-def strip_html_tags(text):
-	return re.sub(r'<.*?>', '', text)
+def strip_html_tags_and_links(text):
+	return re.sub(r'(http\S+|<.*?>)', ' ', text)
 	
-
-def remove_links(text):
-	return re.sub(r'https?:\/\/.*[\r\n]*', '', text)
-
 
 def convert_html_entities(text):
 	def fixup(m):
@@ -50,25 +46,29 @@ def convert_html_entities(text):
 	return re.sub("&#?\w+;", fixup, text)
 
 
+def remove_non_alphanumeric(text):
+	return re.sub('[^\w -]', ' ', text)
+
+
 def stem(words):
 	return [stemmer.stem(w) for w in words]
 
 
 # Keeping here for now but unused at the moment.
 def remove_stop_words(words):
-	unwanted = stopwords.words('english') + ['.', '!', '?', ';', ':']
-	return [w for w in words if w not in unwanted]
+	return [w for w in words if w not in stopwords.words('english')]
 	
 
 def clean(data):
 	comments = [data['comment'], data['response']]
 	
 	cleaners = [
-		strip_html_tags,
-		remove_links,
+		strip_html_tags_and_links,
 		convert_html_entities,
+		remove_non_alphanumeric,
 		word_tokenize,
-		stem
+		stem,
+		remove_stop_words
 	]
 	
 	for cleaner in cleaners:
@@ -77,21 +77,27 @@ def clean(data):
 	comment, response = comments
 	
 	return {
-		'comment': ' '.join(comment),
-		'response': ' '.join(response)
+		'comment': ' '.join(comment).encode('utf-8'),
+		'response': ' '.join(response).encode('utf-8')
 	}
 
 
-with open('test_comments.json', 'r') as f:
+print 'Reading from raw JSON file...'
+
+with open('comment_response_raw.json') as f:
 	raw_data = json.loads(f.read())
 
-clean_data = []
+print 'Cleaning data...'
 
-for comment_pair in raw_data:
-	clean_data.append(clean(comment_pair))
+clean_data = [clean(x) for x in raw_data]
+	
+print 'Writing cleaned data to JSON file...'
 
 with open('comment_response_clean.json', 'w+') as f:
 	f.write(json.dumps(clean_data, sort_keys=True, indent=2))
+	f.close()
+
+print 'Writing cleaned data to CSV file...'
 
 headers = clean_data[0].keys()
 
@@ -99,3 +105,6 @@ with open('comment_response_clean.csv', 'w+') as f:
 	dict_writer = csv.DictWriter(f, headers)
 	dict_writer.writeheader()
 	dict_writer.writerows(clean_data)
+	f.close()
+	
+print 'Done.'
