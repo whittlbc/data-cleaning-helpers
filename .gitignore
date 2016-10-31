@@ -5,3 +5,5 @@ tmp/
 *.gz
 hn_comments
 *.json
+.env
+venv/
